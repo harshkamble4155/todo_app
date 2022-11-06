@@ -19,6 +19,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
+  bool isSearchOpen = false;
+  final _searchController = TextEditingController();
+  List<TodoModel> searchList = [];
+
+  final focusNode = FocusNode();
+
   Widget listWidget(BuildContext context, ListResponse listResponse) {
     List<TodoModel>? todoModelList = listResponse.data as List<TodoModel>?;
     switch (listResponse.status) {
@@ -42,70 +48,135 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Expanded(
               flex: 1,
-              child: ListView.builder(
-                itemCount: todoModelList!.length,
-                itemBuilder: (context, index) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              child: searchList.isNotEmpty
+                  ? ListView.builder(
+                      itemCount: searchList.length,
+                      itemBuilder: (context, index) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              todoModelList[index].title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                            Padding(
+                              padding: const EdgeInsets.only(left: 15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    searchList[index].title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Text(searchList[index].description ?? ''),
+                                ],
                               ),
                             ),
-                            const SizedBox(
-                              height: 10,
-                            ),
-                            Text(todoModelList[index].description ?? ''),
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    final todoModel = TodoModel(
+                                        id: searchList[index].id!,
+                                        title: searchList[index].title,
+                                        description:
+                                            searchList[index].description,
+                                        type: searchList[index].type);
+                                    _titleCtrl.text = todoModel.title;
+                                    _descCtrl.text = todoModel.description == ''
+                                        ? ''
+                                        : todoModel.description!;
+                                    print('Update: ${todoModel.id}');
+                                    updateTodoList(context, todoModel);
+                                  },
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.indigo,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    Provider.of<TodoViewModel>(context,
+                                            listen: false)
+                                        .removeTodo(searchList[index].id!);
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete_forever,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            )
                           ],
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              final todoModel = TodoModel(
-                                  id: todoModelList[index].id!,
-                                  title: todoModelList[index].title,
-                                  description: todoModelList[index].description,
-                                  type: todoModelList[index].type);
-                                  _titleCtrl.text = todoModel.title;
-                    _descCtrl.text = todoModel.description == ''
-                        ? ''
-                        : todoModel.description!;
-                              updateTodoList(context, todoModel);
-                              setState(() {
-                                
-                              });
-                            },
-                            icon: const Icon(
-                              Icons.edit,
-                              color: Colors.indigo,
+                        );
+                      },
+                    )
+                  : ListView.builder(
+                      itemCount: todoModelList!.length,
+                      itemBuilder: (context, index) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    todoModelList[index].title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Text(todoModelList[index].description ?? ''),
+                                ],
+                              ),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              Provider.of<TodoViewModel>(context, listen: false)
-                                  .removeTodo(todoModelList[index].id!);
-                            },
-                            icon: const Icon(
-                              Icons.delete_forever,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  );
-                },
-              ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    final todoModel = TodoModel(
+                                        id: todoModelList[index].id!,
+                                        title: todoModelList[index].title,
+                                        description:
+                                            todoModelList[index].description,
+                                        type: todoModelList[index].type);
+                                    _titleCtrl.text = todoModel.title;
+                                    _descCtrl.text = todoModel.description == ''
+                                        ? ''
+                                        : todoModel.description!;
+                                    print('Update: ${todoModel.id}');
+                                    updateTodoList(context, todoModel);
+                                  },
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.indigo,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    Provider.of<TodoViewModel>(context,
+                                            listen: false)
+                                        .removeTodo(todoModelList[index].id!);
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete_forever,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        );
+                      },
+                    ),
             ),
           ],
         );
@@ -145,9 +216,58 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     ListResponse _listResponse = Provider.of<TodoViewModel>(context).response;
+    List<TodoModel>? _todoListModel = _listResponse.data as List<TodoModel>?;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todo App'),
+        title: isSearchOpen
+            ? TextFormField(
+                controller: _searchController,
+                focusNode: focusNode,
+                onChanged: (value) {
+                  setState(() {
+                    searchList.clear();
+                    for (var element in _todoListModel!) {
+                      if (element.title.contains(value)) {
+                        searchList.add(element);
+                      }
+                      print('Length N: ${searchList.length}');
+                    }
+                  });
+                },
+                onFieldSubmitted: (value) {
+                  // setState(() {
+                  //   if (isSearchOpen) {
+                  //     _searchController.clear();
+                  //   }
+                  //   isSearchOpen = !isSearchOpen;
+                  // });
+                },
+                decoration: const InputDecoration(
+                  hintText: "Search todo...",
+                ),
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
+              )
+            : const Text('Todo App'),
+        actions: [
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  if (!isSearchOpen) {
+                    focusNode.requestFocus();
+                  }
+                  if (isSearchOpen) {
+                    searchList.clear();
+                    _searchController.clear();
+                  }
+                  isSearchOpen = !isSearchOpen;
+                });
+              },
+              icon: isSearchOpen
+                  ? const Icon(Icons.close)
+                  : const Icon(Icons.search))
+        ],
       ),
       body: listWidget(context, _listResponse),
     );
@@ -227,12 +347,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextButton(
                   onPressed: () {
                     final _todoModel = TodoModel(
-                      title: _titleCtrl.text,
-                      description: _descCtrl.text == '' ? '' : _descCtrl.text,
-                      type: todoModel.type,
-                    );
+                        title: _titleCtrl.text,
+                        description: _descCtrl.text == '' ? '' : _descCtrl.text,
+                        type: todoModel.type,
+                        id: todoModel.id);
                     Provider.of<TodoViewModel>(context, listen: false)
-                        .modifyTodo(_todoModel.toJson(), todoModel.id);
+                        .modifyTodo(_todoModel);
                     Navigator.of(context).pop();
                     _titleCtrl.clear();
                     _descCtrl.clear();

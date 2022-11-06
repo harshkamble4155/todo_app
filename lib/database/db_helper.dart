@@ -54,9 +54,12 @@ class DbHelper {
     return await db.query(tblName);
   }
 
-  Future<int> updateTodo(Map<String, dynamic> row, int i) async {
+  Future<int> updateTodo(TodoModel row) async {
     Database db = await instance.database;
-    return await db.update(tblName, row, where: "$col_id = ?", whereArgs: [i]);
+    print('Check Update: ${[row.title, row.description, row.type, row.id]}');
+    return await db.rawUpdate(
+        'UPDATE $tblName SET $col_title = ?, $col_desc = ?, $col_type = ? WHERE $col_id = ?',
+        [row.title, row.description, row.type, row.id]);
   }
 
   Future<int> deleteTodo(int id) async {

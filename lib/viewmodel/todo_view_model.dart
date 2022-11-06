@@ -22,14 +22,15 @@ class TodoViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final mapData = await dbHelper.fetchTodo();
-      List<TodoModel> listModel = mapData.map((e) => TodoModel.fromJson(e)).toList();
+      List<TodoModel> listModel =
+          mapData.map((e) => TodoModel.fromJson(e)).toList();
       print('Length: ${listModel.length}');
       if (listModel.isNotEmpty) {
         _listResponse = ListResponse.completed(listModel);
       } else {
         _listResponse = ListResponse.error('No data');
       }
-    } on Exception catch(e) {
+    } on Exception catch (e) {
       _listResponse = ListResponse.error(e.toString());
     }
     notifyListeners();
@@ -43,25 +44,28 @@ class TodoViewModel extends ChangeNotifier {
       print('Updated: $value');
       final newMapData = await dbHelper.fetchTodo();
       print('Updated Value: $newMapData');
-      List<TodoModel> listModel = newMapData.map((e) => TodoModel.fromJson(e)).toList();
+      List<TodoModel> listModel =
+          newMapData.map((e) => TodoModel.fromJson(e)).toList();
       _listResponse = ListResponse.completed(listModel);
-    } on Exception catch(e) {
+    } on Exception catch (e) {
       _listResponse = ListResponse.error(e.toString());
     }
     notifyListeners();
   }
 
-  Future modifyTodo(Map<String, dynamic> row, int? id) async {
+  Future modifyTodo(TodoModel row) async {
     _listResponse = ListResponse.loading('Loading...');
     notifyListeners();
+    print('first update: ${[row.title, row.description, row.type, row.id]}');
     try {
-      int value = await dbHelper.updateTodo(row, id!);
-      print('Updated: $value');
-      final newMapData = await dbHelper.fetchTodo();
-      print('Updated Value: $newMapData');
-      List<TodoModel> listModel = newMapData.map((e) => TodoModel.fromJson(e)).toList();
-      _listResponse = ListResponse.completed(listModel);
-    } on Exception catch(e) {
+      await dbHelper.updateTodo(row).then((value) async {
+        print(value);
+        final newMapData = await dbHelper.fetchTodo();
+        List<TodoModel> listModel =
+            newMapData.map((e) => TodoModel.fromJson(e)).toList();
+        _listResponse = ListResponse.completed(listModel);
+      });
+    } on Exception catch (e) {
       _listResponse = ListResponse.error(e.toString());
     }
     notifyListeners();
@@ -73,9 +77,10 @@ class TodoViewModel extends ChangeNotifier {
     try {
       int value = await dbHelper.deleteTodo(id);
       final newMapData = await dbHelper.fetchTodo();
-      List<TodoModel> listModel = newMapData.map((e) => TodoModel.fromJson(e)).toList();
+      List<TodoModel> listModel =
+          newMapData.map((e) => TodoModel.fromJson(e)).toList();
       _listResponse = ListResponse.completed(listModel);
-    } on Exception catch(e) {
+    } on Exception catch (e) {
       _listResponse = ListResponse.error(e.toString());
     }
     notifyListeners();
